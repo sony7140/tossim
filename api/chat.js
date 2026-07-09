@@ -34,10 +34,10 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "POST 요청만 허용됩니다." });
   }
 
-  // 키는 서버 환경변수에서만 읽는다. 붙여넣을 때 공백·개행·중복이 끼어들면
-  // 헤더가 깨져(잘못된 Authorization 값 → fetch 예외) 호출이 실패하므로,
-  // 공백 기준 첫 토큰만 안전하게 취한다.
-  const apiKey = (process.env.OPENROUTER_API_KEY || "").split(/\s+/).filter(Boolean)[0] || "";
+  // 키는 서버 환경변수에서만 읽는다. 먼저 trim으로 앞뒤 공백을 제거하고,
+  // 붙여넣을 때 개행·중복이 끼어들어 헤더가 깨지는(잘못된 Authorization 값 →
+  // fetch 예외) 경우까지 막기 위해 공백 기준 첫 유효 토큰만 취한다.
+  const apiKey = (process.env.OPENROUTER_API_KEY || "").trim().split(/\s+/).filter(Boolean)[0] || "";
   if (!apiKey) {
     return res.status(500).json({ error: "서버에 OPENROUTER_API_KEY가 설정되지 않았습니다." });
   }
