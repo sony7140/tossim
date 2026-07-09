@@ -1,0 +1,7 @@
+# 비밀 키가 들어있는 파일 — 절대 커밋 금지
+.env
+config.js
+
+# OS / 편집기 부산물
+Thumbs.db
+.DS_Store

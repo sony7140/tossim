@@ -1,0 +1,941 @@
+<!-- Created: 2026-07-06 15:38:00 -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 공감 다이어리</title>
+<style>
+  :root {
+    --paper: #fdf6ec;
+    --paper-2: #fbefe0;
+    --card: #fffdf9;
+    --ink: #4a3f35;
+    --ink-soft: #8a7a68;
+    --line: #ece0d0;
+    --accent: #e8a87c;
+    --accent-deep: #d98b5f;
+    --shadow: 0 10px 30px rgba(140, 100, 60, 0.12);
+    --radius: 20px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #26211c;
+      --paper-2: #2f2822;
+      --card: #322b24;
+      --ink: #f0e6d8;
+      --ink-soft: #b8a892;
+      --line: #43392f;
+      --accent: #e8a87c;
+      --accent-deep: #f0b98f;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", "Segoe UI", sans-serif;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, var(--paper-2), transparent 60%),
+      var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  /* 헤더 */
+  header { text-align: center; margin-bottom: 28px; }
+  .logo { font-size: 40px; margin-bottom: 6px; }
+  h1 {
+    font-size: 26px;
+    margin: 0 0 4px;
+    letter-spacing: -0.5px;
+    font-weight: 800;
+  }
+  .subtitle { color: var(--ink-soft); font-size: 14px; margin: 0; }
+  .today {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 5px 14px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    box-shadow: var(--shadow);
+  }
+
+  /* 알림 배너 */
+  .banner {
+    display: none;
+    background: #fdecea;
+    color: #a3392e;
+    border: 1px solid #f3c9c3;
+    padding: 12px 16px;
+    border-radius: 14px;
+    font-size: 13.5px;
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+  @media (prefers-color-scheme: dark) {
+    .banner { background: #3a2420; color: #ffb9ad; border-color: #5c352c; }
+  }
+
+  /* 입력 카드 */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+  }
+  .card-label {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nickname {
+    width: 100%;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 14px;
+    padding: 11px 16px;
+    font: inherit;
+    font-size: 15px;
+    outline: none;
+    margin-bottom: 10px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .nickname:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(232, 168, 124, 0.22);
+  }
+  textarea {
+    width: 100%;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 14px;
+    padding: 14px 16px;
+    font: inherit;
+    font-size: 16px;
+    resize: none;
+    min-height: 64px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(232, 168, 124, 0.22);
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    gap: 12px;
+  }
+  .counter { font-size: 12.5px; color: var(--ink-soft); }
+  button.primary {
+    border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(217, 139, 95, 0.35);
+    transition: transform .12s, box-shadow .12s, opacity .2s;
+    white-space: nowrap;
+  }
+  button.primary:hover:not(:disabled) { transform: translateY(-1px); }
+  button.primary:active:not(:disabled) { transform: translateY(0); }
+  button.primary:disabled { opacity: .55; cursor: not-allowed; }
+
+  /* 로딩 */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 30px 10px 10px;
+    color: var(--ink-soft);
+    font-size: 14.5px;
+  }
+  .dots { display: inline-flex; gap: 6px; margin-bottom: 10px; }
+  .dots span {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--accent);
+    animation: bounce 1.2s infinite ease-in-out;
+  }
+  .dots span:nth-child(2) { animation-delay: .18s; }
+  .dots span:nth-child(3) { animation-delay: .36s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: .4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  /* 결과 카드 */
+  .result {
+    margin-top: 22px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left: 6px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 26px 24px;
+    display: none;
+    animation: rise .45s ease both;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .result-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .result-emoji { font-size: 46px; line-height: 1; }
+  .result-emotion {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 0 0 2px;
+  }
+  .result-emotion b {
+    display: inline-block;
+    margin-top: 2px;
+    font-size: 19px;
+    color: var(--ink);
+  }
+  .result-message {
+    font-size: 16.5px;
+    color: var(--ink);
+    margin: 0;
+    word-break: keep-all;
+  }
+
+  /* 히스토리 */
+  .history { margin-top: 44px; }
+  .history-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .history-title h2 { font-size: 16px; margin: 0; }
+  .clear-btn {
+    background: none; border: none; color: var(--ink-soft);
+    font: inherit; font-size: 13px; cursor: pointer; text-decoration: underline;
+  }
+  .entry {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    position: relative;
+    animation: rise .4s ease both;
+  }
+  .entry-top {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+  }
+  .entry-emoji { font-size: 24px; }
+  .entry-meta { font-size: 12px; color: var(--ink-soft); }
+  .entry-nick { color: var(--accent-deep); font-weight: 700; }
+  .entry-text { font-size: 15px; margin: 2px 0 8px; }
+  .entry-msg {
+    font-size: 13.5px; color: var(--ink-soft);
+    background: var(--paper); border-radius: 10px; padding: 10px 12px;
+    word-break: keep-all;
+  }
+  .entry-del {
+    position: absolute; top: 12px; right: 12px;
+    background: none; border: none; color: var(--ink-soft);
+    cursor: pointer; font-size: 15px; opacity: .5; transition: opacity .2s;
+  }
+  .entry-del:hover { opacity: 1; }
+  .empty {
+    text-align: center; color: var(--ink-soft); font-size: 14px;
+    padding: 20px; border: 1px dashed var(--line); border-radius: 16px;
+  }
+
+  /* 공통 패널 헤더 */
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .panel-head h2 { font-size: 16px; margin: 0; }
+
+  /* 세그먼트 토글 (통계 기간) */
+  .seg {
+    display: inline-flex; background: var(--paper);
+    border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px;
+  }
+  .seg button {
+    border: none; background: none; color: var(--ink-soft);
+    font: inherit; font-size: 12.5px; padding: 5px 13px; border-radius: 999px;
+    cursor: pointer; transition: background .2s, color .2s;
+  }
+  .seg button.on {
+    background: var(--card); color: var(--ink);
+    box-shadow: var(--shadow); font-weight: 700;
+  }
+
+  /* 감정 통계 */
+  .stats { margin-top: 44px; }
+  .stats-card, .cal-card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px;
+  }
+  .tiles {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px; margin-bottom: 20px;
+  }
+  .tile {
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: 14px; padding: 14px 10px; text-align: center;
+  }
+  .tile-num { font-size: 24px; font-weight: 800; line-height: 1.25; }
+  .tile-num.tile-emoji { font-size: 17px; }
+  .tile-label { font-size: 11.5px; color: var(--ink-soft); margin-top: 5px; }
+  .bars { display: flex; flex-direction: column; gap: 11px; }
+  .bar-row {
+    display: grid; grid-template-columns: 74px 1fr 74px;
+    align-items: center; gap: 10px;
+  }
+  .bar-name { font-size: 13px; white-space: nowrap; }
+  .bar-track {
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: 999px; height: 15px; overflow: hidden;
+  }
+  .bar-fill { height: 100%; border-radius: 999px; min-width: 6px; transition: width .55s ease; }
+  .bar-val { font-size: 12px; color: var(--ink-soft); text-align: right; }
+  .stats-empty, .cal-empty {
+    text-align: center; color: var(--ink-soft);
+    font-size: 13.5px; padding: 10px;
+  }
+
+  /* 캘린더 */
+  .cal { margin-top: 44px; }
+  .cal-nav { display: flex; align-items: center; gap: 8px; }
+  .cal-nav button {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    border-radius: 10px; width: 32px; height: 32px; cursor: pointer;
+    font-size: 17px; line-height: 1; transition: border-color .2s, transform .1s;
+  }
+  .cal-nav button:hover { border-color: var(--accent); }
+  .cal-nav button:active { transform: scale(.94); }
+  .cal-month { font-size: 15px; font-weight: 700; min-width: 108px; text-align: center; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .cal-wd { text-align: center; font-size: 11.5px; color: var(--ink-soft); padding-bottom: 4px; }
+  .cal-wd.sun { color: var(--accent-deep); }
+  .cal-cell {
+    position: relative; aspect-ratio: 1 / 1;
+    border: 1px solid var(--line); border-radius: 12px; background: var(--paper);
+    padding: 4px; display: flex; flex-direction: column; align-items: center;
+    font-size: 11px; color: var(--ink-soft);
+  }
+  .cal-cell.empty-cell { border: none; background: none; }
+  .cal-cell.has { cursor: pointer; transition: transform .12s, box-shadow .12s; }
+  .cal-cell.has:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .cal-cell.today { border-color: var(--accent); border-width: 2px; padding: 3px; }
+  .cal-cell.selected { box-shadow: 0 0 0 3px rgba(232, 168, 124, 0.4); }
+  .cal-daynum { align-self: flex-start; padding-left: 2px; font-weight: 600; }
+  .cal-emoji { font-size: 19px; line-height: 1; margin-top: 1px; }
+  .cal-dot { width: 16px; height: 3px; border-radius: 2px; margin-top: 3px; }
+  .cal-badge {
+    position: absolute; top: 2px; right: 3px;
+    font-size: 9px; font-weight: 700; background: var(--accent-deep); color: #fff;
+    border-radius: 999px; padding: 0 4px; min-width: 14px; text-align: center; line-height: 1.5;
+  }
+  .cal-detail { margin-top: 16px; }
+  .cal-detail-head {
+    font-size: 13.5px; font-weight: 700; color: var(--ink-soft);
+    margin: 4px 0 12px; padding-top: 14px; border-top: 1px solid var(--line);
+  }
+
+  footer {
+    text-align: center; margin-top: 40px;
+    font-size: 12px; color: var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">🕯️</div>
+      <h1>AI 공감 다이어리</h1>
+      <p class="subtitle">오늘 하루를 한 줄로 적어보세요. 마음을 헤아려 드릴게요.</p>
+      <div class="today" id="today"></div>
+    </header>
+
+    <div class="banner" id="banner"></div>
+
+    <section class="card">
+      <p class="card-label">📖 오늘의 한 줄</p>
+      <input id="nickname" class="nickname" type="text" maxlength="20"
+        placeholder="닉네임 (예: 오늘의 나)" aria-label="닉네임" />
+      <textarea id="input" maxlength="200" rows="2"
+        placeholder="예) 오늘 발표를 무사히 끝냈는데 아무도 몰라줘서 조금 서운했어."></textarea>
+      <div class="row">
+        <span class="counter"><span id="count">0</span> / 200</span>
+        <button class="primary" id="submit">마음 나누기</button>
+      </div>
+    </section>
+
+    <div class="loading" id="loading">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <div>AI가 당신의 하루를 조용히 읽고 있어요…</div>
+    </div>
+
+    <section class="result" id="result">
+      <div class="result-head">
+        <div class="result-emoji" id="rEmoji">🌱</div>
+        <div>
+          <p class="result-emotion">오늘 느낀 감정<br /><b id="rEmotion">평온</b></p>
+        </div>
+      </div>
+      <p class="result-message" id="rMessage"></p>
+    </section>
+
+    <section class="stats" id="stats">
+      <div class="panel-head">
+        <h2>📊 감정 통계</h2>
+        <div class="seg" id="statScope">
+          <button type="button" data-scope="month" class="on">이번 달</button>
+          <button type="button" data-scope="all">전체</button>
+        </div>
+      </div>
+      <div class="stats-card" id="statsBody"></div>
+    </section>
+
+    <section class="cal" id="calendar">
+      <div class="panel-head">
+        <h2>📅 감정 캘린더</h2>
+        <div class="cal-nav">
+          <button type="button" id="calPrev" aria-label="이전 달">‹</button>
+          <span class="cal-month" id="calMonth"></span>
+          <button type="button" id="calNext" aria-label="다음 달">›</button>
+        </div>
+      </div>
+      <div class="cal-card">
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="cal-detail" id="calDetail"></div>
+      </div>
+    </section>
+
+    <section class="history">
+      <div class="history-title">
+        <h2>🗂️ 지난 기록</h2>
+        <button class="clear-btn" id="clearAll">전체 삭제</button>
+      </div>
+      <div id="entries"></div>
+    </section>
+
+    <footer>gpt-oss-20b · OpenRouter · 당신의 마음을 응원해요</footer>
+  </div>
+
+<!-- .env에서 생성된 API 키 주입 (파일이 없으면 앱이 안내 배너를 표시) -->
+<script src="config.js"></script>
+<script>
+// Created: 2026-07-06 15:38:00
+(function () {
+  "use strict";
+
+  // ---- 상수 ----
+  var API_URL = "https://openrouter.ai/api/v1/chat/completions";
+  var MODEL = "openai/gpt-oss-20b:free";
+  var STORAGE_KEY = "empathy-diary-entries";
+  var NICK_KEY = "empathy-diary-nickname";
+
+  // 감정별 색상(결과 카드 강조선 · 통계 막대 · 캘린더 점)
+  var EMOTION_COLORS = {
+    "기쁨": "#f4c04e", "설렘": "#f08fb0", "평온": "#8fc99a",
+    "슬픔": "#7fa8d8", "불안": "#a596d6", "분노": "#e08a7c",
+    "지침": "#b8a892"
+  };
+  // 감정별 대표 이모지(통계·캘린더 표기 일관용)
+  var EMOTION_EMOJI = {
+    "기쁨": "😊", "설렘": "💗", "평온": "🌿",
+    "슬픔": "😢", "불안": "😰", "분노": "😠",
+    "지침": "😮‍💨"
+  };
+  // 통계 막대 정렬 기준 순서
+  var EMO_ORDER = ["기쁨", "설렘", "평온", "슬픔", "불안", "분노", "지침"];
+
+  // ---- DOM ----
+  var $ = function (id) { return document.getElementById(id); };
+  var input = $("input"), nickname = $("nickname"), submit = $("submit"), loading = $("loading");
+  var result = $("result"), rEmoji = $("rEmoji"), rEmotion = $("rEmotion"), rMessage = $("rMessage");
+  var count = $("count"), banner = $("banner"), entriesBox = $("entries");
+  var statsBody = $("statsBody"), statScope = $("statScope");
+  var calGrid = $("calGrid"), calMonthLbl = $("calMonth"), calDetail = $("calDetail");
+
+  // ---- 통계/캘린더 상태 ----
+  var nowRef = new Date();
+  var calYear = nowRef.getFullYear(), calMonth = nowRef.getMonth();
+  var selectedKey = null;   // 캘린더에서 선택된 날짜 키
+  var statScopeVal = "month"; // "month" | "all"
+
+  // ---- 오늘 날짜 ----
+  (function () {
+    var d = new Date();
+    var days = ["일", "월", "화", "수", "목", "금", "토"];
+    $("today").textContent =
+      d.getFullYear() + "년 " + (d.getMonth() + 1) + "월 " + d.getDate() + "일 (" + days[d.getDay()] + ")";
+  })();
+
+  // ---- API 키 확인 ----
+  function getApiKey() {
+    return (window.APP_CONFIG && window.APP_CONFIG.OPENROUTER_API_KEY) || "";
+  }
+  if (!getApiKey()) {
+    banner.style.display = "block";
+    banner.innerHTML =
+      "⚠️ API 키를 찾을 수 없어요. 같은 폴더의 <b>.env</b> 파일에 " +
+      "<b>OPENROUTER_API_KEY</b> 를 넣은 뒤 <b>config.js</b> 를 생성해 주세요. " +
+      "그 전까지는 감정 분석이 동작하지 않아요.";
+  }
+
+  // ---- 닉네임 기억 (localStorage) ----
+  try {
+    var savedNick = localStorage.getItem(NICK_KEY);
+    if (savedNick) nickname.value = savedNick;
+  } catch (e) {}
+  nickname.addEventListener("input", function () {
+    try { localStorage.setItem(NICK_KEY, nickname.value.trim()); } catch (e) {}
+  });
+
+  // ---- 글자 수 ----
+  input.addEventListener("input", function () { count.textContent = input.value.length; });
+  // Enter(줄바꿈 없이)로 제출, Shift+Enter는 줄바꿈
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); }
+  });
+  submit.addEventListener("click", handleSubmit);
+
+  // ---- 견고한 JSON 추출 ----
+  function extractJson(text) {
+    if (!text) return null;
+    var s = text.indexOf("{"), e = text.lastIndexOf("}");
+    if (s === -1 || e === -1 || e < s) return null;
+    try { return JSON.parse(text.slice(s, e + 1)); }
+    catch (err) { return null; }
+  }
+
+  // ---- OpenRouter 호출: 감정 분석 + 공감 메시지 ----
+  function analyzeEmotion(text) {
+    var systemPrompt =
+      "너는 따뜻하고 다정한 감정 분석가야. 사용자가 오늘 있었던 일을 한 줄로 적으면, " +
+      "그 마음을 헤아려 감정을 분석하고 진심으로 공감하며 위로해 줘. " +
+      "반드시 아래 JSON 형식으로만 답하고, 그 외의 말은 절대 하지 마.\n" +
+      '{"emotion":"기쁨|슬픔|분노|불안|평온|설렘|지침 중 정확히 하나",' +
+      '"emoji":"감정을 나타내는 이모지 1개",' +
+      '"message":"2~3문장의 진심 어린 공감과 위로. 따뜻한 존댓말로."}\n' +
+      "message는 반드시 자연스러운 한국어로만 작성하고, 다른 언어의 단어나 문자를 절대 섞지 마.";
+
+    var body = {
+      model: MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: text }
+      ],
+      max_tokens: 1200,   // gpt-oss는 reasoning 모델 → 넉넉히 줘야 content가 채워짐
+      temperature: 0.85
+    };
+
+    return fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + getApiKey(),
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    }).then(function (res) {
+      if (res.status === 429) throw new Error("잠시 요청이 많아요. 조금 뒤에 다시 시도해 주세요.");
+      if (!res.ok) throw new Error("서버 응답 오류 (" + res.status + ")");
+      return res.json();
+    }).then(function (data) {
+      var content = data && data.choices && data.choices[0] &&
+                    data.choices[0].message && data.choices[0].message.content;
+      var parsed = extractJson(content);
+      if (!parsed || !parsed.message) {
+        throw new Error("EMPTY"); // 폴백 처리
+      }
+      return {
+        emotion: parsed.emotion || "평온",
+        emoji: parsed.emoji || "🌿",
+        message: parsed.message
+      };
+    });
+  }
+
+  // ---- 제출 처리 ----
+  function handleSubmit() {
+    var text = input.value.trim();
+    if (!text) {
+      input.focus();
+      shake(input);
+      return;
+    }
+    if (!getApiKey()) {
+      banner.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+
+    setLoading(true);
+    result.style.display = "none";
+
+    analyzeEmotion(text).then(function (r) {
+      showResult(r);
+      saveEntry(text, r);
+    }).catch(function (err) {
+      var msg = (err && err.message && err.message !== "EMPTY")
+        ? err.message
+        : "지금은 마음을 다 읽지 못했어요. 그래도 오늘 하루를 적어준 당신, 참 수고했어요. 잠시 후 다시 들려주세요.";
+      showResult({
+        emotion: "평온",
+        emoji: "🫂",
+        message: msg
+      }, true);
+    }).then(function () {
+      setLoading(false);
+    });
+  }
+
+  function setLoading(on) {
+    loading.style.display = on ? "block" : "none";
+    submit.disabled = on;
+    submit.textContent = on ? "읽는 중…" : "마음 나누기";
+  }
+
+  function showResult(r, isFallback) {
+    rEmoji.textContent = r.emoji;
+    rEmotion.textContent = r.emotion;
+    rMessage.textContent = r.message;
+    result.style.borderLeftColor = EMOTION_COLORS[r.emotion] || "var(--accent)";
+    result.style.display = "block";
+    if (!isFallback) result.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function shake(el) {
+    el.style.transition = "transform .1s";
+    var seq = [-6, 6, -4, 4, 0], i = 0;
+    var t = setInterval(function () {
+      el.style.transform = "translateX(" + seq[i++] + "px)";
+      if (i >= seq.length) { clearInterval(t); el.style.transform = ""; }
+    }, 60);
+  }
+
+  // ---- 히스토리 (localStorage) ----
+  function loadEntries() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function persist(list) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
+  }
+  function saveEntry(text, r) {
+    var list = loadEntries();
+    list.unshift({
+      id: Date.now(),
+      nickname: nickname.value.trim(),
+      text: text,
+      emotion: r.emotion,
+      emoji: r.emoji,
+      message: r.message,
+      date: new Date().toISOString()
+    });
+    if (list.length > 50) list = list.slice(0, 50);
+    persist(list);
+    refreshAll();
+    input.value = "";
+    count.textContent = "0";
+  }
+  function deleteEntry(id) {
+    persist(loadEntries().filter(function (e) { return e.id !== id; }));
+    refreshAll();
+  }
+  function fmtDate(iso) {
+    var d = new Date(iso);
+    return (d.getMonth() + 1) + "월 " + d.getDate() + "일 " +
+      String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+  // 기록 카드 하나를 만들어 반환 (히스토리·캘린더 상세에서 공용, XSS 방지 위해 textContent 사용)
+  function buildEntryEl(e) {
+    var el = document.createElement("div");
+    el.className = "entry";
+    el.style.borderLeft = "5px solid " + (EMOTION_COLORS[e.emotion] || "#e8a87c");
+    el.innerHTML =
+      '<button class="entry-del" title="삭제">✕</button>' +
+      '<div class="entry-top">' +
+        '<span class="entry-emoji"></span>' +
+        '<span class="entry-meta"><b class="entry-nick"></b><b class="entry-emotion"></b> · <span class="entry-date"></span></span>' +
+      '</div>' +
+      '<div class="entry-text"></div>' +
+      '<div class="entry-msg"></div>';
+    el.querySelector(".entry-emoji").textContent = e.emoji;
+    var nickEl = el.querySelector(".entry-nick");
+    if (e.nickname) { nickEl.textContent = e.nickname + " · "; }
+    else { nickEl.remove(); }
+    el.querySelector(".entry-emotion").textContent = e.emotion;
+    el.querySelector(".entry-date").textContent = fmtDate(e.date);
+    el.querySelector(".entry-text").textContent = "“" + e.text + "”";
+    el.querySelector(".entry-msg").textContent = e.message;
+    el.querySelector(".entry-del").addEventListener("click", function () { deleteEntry(e.id); });
+    return el;
+  }
+
+  function renderEntries() {
+    var list = loadEntries();
+    if (!list.length) {
+      entriesBox.innerHTML = '<div class="empty">아직 기록이 없어요. 첫 한 줄을 남겨보세요 🌷</div>';
+      return;
+    }
+    entriesBox.innerHTML = "";
+    list.forEach(function (e) { entriesBox.appendChild(buildEntryEl(e)); });
+  }
+
+  // ==== 감정 통계 ====
+
+  // 로컬 날짜 키("YYYY-M-D") — 시간대 문제 없이 하루 단위 그룹핑
+  function dayKey(d) { return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+  function entryKey(e) { return dayKey(new Date(e.date)); }
+
+  // 하루 안 여러 기록 중 대표 감정 뽑기(최빈 → 동률이면 가장 최근)
+  function dominant(entries) {
+    var c = {};
+    entries.forEach(function (e) { c[e.emotion] = (c[e.emotion] || 0) + 1; });
+    var best = 0;
+    entries.forEach(function (e) { if (c[e.emotion] > best) best = c[e.emotion]; });
+    var top = entries.filter(function (e) { return c[e.emotion] === best; });
+    top.sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+    return top[0];
+  }
+
+  // 오늘(또는 어제)을 기준으로 연속 기록 일수
+  function computeStreak(list) {
+    var has = {};
+    list.forEach(function (e) { has[entryKey(e)] = true; });
+    var cursor = new Date(); cursor.setHours(0, 0, 0, 0);
+    if (!has[dayKey(cursor)]) {
+      cursor.setDate(cursor.getDate() - 1);          // 오늘 아직 안 썼으면 어제부터
+      if (!has[dayKey(cursor)]) return 0;
+    }
+    var streak = 0;
+    while (has[dayKey(cursor)]) { streak++; cursor.setDate(cursor.getDate() - 1); }
+    return streak;
+  }
+
+  function makeTile(numText, label, isEmoji) {
+    var t = document.createElement("div"); t.className = "tile";
+    var n = document.createElement("div"); n.className = "tile-num" + (isEmoji ? " tile-emoji" : "");
+    n.textContent = numText;
+    var l = document.createElement("div"); l.className = "tile-label";
+    l.textContent = label;
+    t.appendChild(n); t.appendChild(l);
+    return t;
+  }
+
+  function renderStats() {
+    var all = loadEntries();
+    var list = (statScopeVal === "month")
+      ? all.filter(function (e) {
+          var d = new Date(e.date);
+          return d.getFullYear() === nowRef.getFullYear() && d.getMonth() === nowRef.getMonth();
+        })
+      : all;
+
+    statsBody.innerHTML = "";
+    if (!list.length) {
+      var em = document.createElement("div");
+      em.className = "stats-empty";
+      em.textContent = (statScopeVal === "month")
+        ? "이번 달 기록이 아직 없어요. 오늘 한 줄을 남겨보세요 🌱"
+        : "아직 기록이 없어요. 첫 한 줄을 남겨보세요 🌱";
+      statsBody.appendChild(em);
+      return;
+    }
+
+    var counts = {}, total = list.length;
+    list.forEach(function (e) { counts[e.emotion] = (counts[e.emotion] || 0) + 1; });
+
+    // 알려진 감정 순서 우선, 그 외(모르는 감정)는 뒤에 — 각 그룹 내에서는 많은 순
+    var present = Object.keys(counts).sort(function (a, b) {
+      if (counts[b] !== counts[a]) return counts[b] - counts[a];
+      var ia = EMO_ORDER.indexOf(a), ib = EMO_ORDER.indexOf(b);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+    var topName = present[0];
+    var streak = computeStreak(all);
+
+    var tiles = document.createElement("div");
+    tiles.className = "tiles";
+    tiles.appendChild(makeTile(String(total), "총 기록"));
+    tiles.appendChild(makeTile((EMOTION_EMOJI[topName] || "🌿") + " " + topName, "대표 감정", true));
+    tiles.appendChild(makeTile(streak + "일", "연속 기록 🔥"));
+    statsBody.appendChild(tiles);
+
+    var bars = document.createElement("div");
+    bars.className = "bars";
+    present.forEach(function (name) {
+      var pct = Math.round(counts[name] / total * 100);
+      var row = document.createElement("div"); row.className = "bar-row";
+      var nm = document.createElement("div"); nm.className = "bar-name";
+      nm.textContent = (EMOTION_EMOJI[name] || "•") + " " + name;
+      var track = document.createElement("div"); track.className = "bar-track";
+      var fill = document.createElement("div"); fill.className = "bar-fill";
+      fill.style.width = Math.max(pct, 4) + "%";
+      fill.style.background = EMOTION_COLORS[name] || "var(--accent)";
+      track.appendChild(fill);
+      var val = document.createElement("div"); val.className = "bar-val";
+      val.textContent = counts[name] + "회 · " + pct + "%";
+      row.appendChild(nm); row.appendChild(track); row.appendChild(val);
+      bars.appendChild(row);
+    });
+    statsBody.appendChild(bars);
+  }
+
+  statScope.addEventListener("click", function (ev) {
+    var btn = ev.target.closest("button");
+    if (!btn) return;
+    statScopeVal = btn.getAttribute("data-scope");
+    Array.prototype.forEach.call(statScope.querySelectorAll("button"), function (b) {
+      b.classList.toggle("on", b === btn);
+    });
+    renderStats();
+  });
+
+  // ==== 감정 캘린더 ====
+
+  function renderCalendar() {
+    var all = loadEntries();
+    var byDay = {};
+    all.forEach(function (e) { (byDay[entryKey(e)] = byDay[entryKey(e)] || []).push(e); });
+
+    calMonthLbl.textContent = calYear + "년 " + (calMonth + 1) + "월";
+    calGrid.innerHTML = "";
+
+    var wd = ["일", "월", "화", "수", "목", "금", "토"];
+    wd.forEach(function (w, i) {
+      var h = document.createElement("div");
+      h.className = "cal-wd" + (i === 0 ? " sun" : "");
+      h.textContent = w;
+      calGrid.appendChild(h);
+    });
+
+    var startDow = new Date(calYear, calMonth, 1).getDay();
+    var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    var todayKey = dayKey(new Date());
+
+    for (var b = 0; b < startDow; b++) {
+      var blank = document.createElement("div");
+      blank.className = "cal-cell empty-cell";
+      calGrid.appendChild(blank);
+    }
+
+    for (var day = 1; day <= daysInMonth; day++) {
+      var k = calYear + "-" + (calMonth + 1) + "-" + day;
+      var entries = byDay[k];
+      var cell = document.createElement("div");
+      cell.className = "cal-cell";
+      if (k === todayKey) cell.classList.add("today");
+
+      var num = document.createElement("span");
+      num.className = "cal-daynum";
+      num.textContent = day;
+      cell.appendChild(num);
+
+      if (entries && entries.length) {
+        cell.classList.add("has");
+        var dom = dominant(entries);
+        var emj = document.createElement("div");
+        emj.className = "cal-emoji";
+        emj.textContent = dom.emoji;
+        cell.appendChild(emj);
+        var dot = document.createElement("div");
+        dot.className = "cal-dot";
+        dot.style.background = EMOTION_COLORS[dom.emotion] || "var(--accent)";
+        cell.appendChild(dot);
+        if (entries.length > 1) {
+          var badge = document.createElement("span");
+          badge.className = "cal-badge";
+          badge.textContent = entries.length;
+          cell.appendChild(badge);
+        }
+        if (k === selectedKey) cell.classList.add("selected");
+        (function (key) {
+          cell.addEventListener("click", function () {
+            selectedKey = (selectedKey === key) ? null : key;
+            renderCalendar();
+          });
+        })(k);
+      }
+      calGrid.appendChild(cell);
+    }
+
+    renderCalDetail(byDay);
+  }
+
+  function renderCalDetail(byDay) {
+    calDetail.innerHTML = "";
+    if (!selectedKey || !byDay[selectedKey]) {
+      var hint = document.createElement("div");
+      hint.className = "cal-empty";
+      hint.textContent = "이모지가 있는 날짜를 누르면 그날의 기록을 볼 수 있어요.";
+      calDetail.appendChild(hint);
+      return;
+    }
+    var entries = byDay[selectedKey].slice().sort(function (a, b) {
+      return new Date(a.date) - new Date(b.date);
+    });
+    var p = selectedKey.split("-");
+    var head = document.createElement("div");
+    head.className = "cal-detail-head";
+    head.textContent = "🗓️ " + p[0] + "년 " + p[1] + "월 " + p[2] + "일 · 기록 " + entries.length + "개";
+    calDetail.appendChild(head);
+    entries.forEach(function (e) { calDetail.appendChild(buildEntryEl(e)); });
+  }
+
+  $("calPrev").addEventListener("click", function () {
+    calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
+    selectedKey = null; renderCalendar();
+  });
+  $("calNext").addEventListener("click", function () {
+    calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
+    selectedKey = null; renderCalendar();
+  });
+
+  // ==== 전체 새로고침 ====
+  function refreshAll() {
+    renderEntries();
+    renderStats();
+    renderCalendar();
+  }
+
+  $("clearAll").addEventListener("click", function () {
+    if (loadEntries().length && confirm("모든 기록을 삭제할까요?")) {
+      persist([]);
+      selectedKey = null;
+      refreshAll();
+    }
+  });
+
+  refreshAll();
+})();
+</script>
+</body>
+</html>
