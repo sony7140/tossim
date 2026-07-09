@@ -34,8 +34,9 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "POST 요청만 허용됩니다." });
   }
 
-  // 키는 서버 환경변수에서만 읽는다.
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  // 키는 서버 환경변수에서만 읽는다. 붙여넣을 때 끼어드는 공백/개행은 헤더를
+  // 깨뜨리므로(잘못된 Authorization 값 → fetch 예외) 반드시 trim 한다.
+  const apiKey = (process.env.OPENROUTER_API_KEY || "").trim();
   if (!apiKey) {
     return res.status(500).json({ error: "서버에 OPENROUTER_API_KEY가 설정되지 않았습니다." });
   }
@@ -89,6 +90,10 @@ module.exports = async function handler(req, res) {
       message: parsed.message
     });
   } catch (err) {
-    return res.status(502).json({ error: "OpenRouter 호출에 실패했어요." });
+    // detail은 원인 진단용 — 서버 예외 메시지만 담으며 키 값은 노출하지 않는다.
+    return res.status(502).json({
+      error: "OpenRouter 호출에 실패했어요.",
+      detail: String((err && err.message) || err)
+    });
   }
 };
